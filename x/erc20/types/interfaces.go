@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/vm"
 
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/evmos/ethermint/x/evm/statedb"
 	evmtypes "github.com/evmos/ethermint/x/evm/types"
 )
@@ -18,6 +19,12 @@ import (
 type AccountKeeper interface {
 	GetModuleAddress(moduleName string) sdk.AccAddress
 	GetSequence(sdk.Context, sdk.AccAddress) (uint64, error)
+	GetAccount(sdk.Context, sdk.AccAddress) authtypes.AccountI
+}
+
+// StakingKeeper defines the expected interface needed to retrieve the staking denom.
+type StakingKeeper interface {
+	BondDenom(ctx sdk.Context) string
 }
 
 // BankKeeper defines the expected interface needed to retrieve account balances.

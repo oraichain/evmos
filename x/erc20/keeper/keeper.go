@@ -19,6 +19,7 @@ type Keeper struct {
 
 	accountKeeper types.AccountKeeper
 	bankKeeper    types.BankKeeper
+	stakingKeeper types.StakingKeeper
 	evmKeeper     types.EVMKeeper
 }
 
@@ -27,6 +28,7 @@ func NewKeeper(
 	storeKey sdk.StoreKey,
 	cdc codec.BinaryCodec,
 	ps paramtypes.Subspace,
+	sk types.StakingKeeper,
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
 	evmKeeper types.EVMKeeper,
@@ -40,6 +42,7 @@ func NewKeeper(
 		storeKey:      storeKey,
 		cdc:           cdc,
 		paramstore:    ps,
+		stakingKeeper: sk,
 		accountKeeper: ak,
 		bankKeeper:    bk,
 		evmKeeper:     evmKeeper,
