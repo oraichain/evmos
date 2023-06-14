@@ -15,6 +15,7 @@ const (
 	EventTypeConvertERC20          = "convert_erc20"
 	EventTypeBurn                  = "burn"
 	EventTypeRegisterCoin          = "register_coin"
+	EventTypeUpdateRegisterCoin    = "update_register_coin"
 	EventTypeRegisterERC20         = "register_erc20"
 	EventTypeToggleTokenConversion = "toggle_token_conversion" // #nosec
 

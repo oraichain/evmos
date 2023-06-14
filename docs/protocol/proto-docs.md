@@ -44,6 +44,7 @@
     - [RegisterERC20Proposal](#evmos.erc20.v1.RegisterERC20Proposal)
     - [ToggleTokenConversionProposal](#evmos.erc20.v1.ToggleTokenConversionProposal)
     - [TokenPair](#evmos.erc20.v1.TokenPair)
+    - [UpdateRegisterCoinProposal](#evmos.erc20.v1.UpdateRegisterCoinProposal)
   
     - [Owner](#evmos.erc20.v1.Owner)
   
@@ -681,6 +682,25 @@ TokenPair defines an instance that records a pairing consisting of a native
 | `denom` | [string](#string) |  | cosmos base denomination to be mapped to |
 | `enabled` | [bool](#bool) |  | shows token mapping enable status |
 | `contract_owner` | [Owner](#evmos.erc20.v1.Owner) |  | ERC20 owner address ENUM (0 invalid, 1 ModuleAccount, 2 external address) |
+
+
+
+
+
+
+<a name="evmos.erc20.v1.UpdateRegisterCoinProposal"></a>
+
+### UpdateRegisterCoinProposal
+UpdateRegisterCoinProposal is a gov Content type to update register coin proposal
+of a token pair.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `title` | [string](#string) |  | title of the proposal |
+| `description` | [string](#string) |  | proposal description |
+| `erc20address` | [string](#string) |  | metadata of the native Cosmos coin contract address of ERC20 token |
+| `metadata` | [cosmos.bank.v1beta1.Metadata](#cosmos.bank.v1beta1.Metadata) |  | metadata of the native Cosmos coin |
 
 
 

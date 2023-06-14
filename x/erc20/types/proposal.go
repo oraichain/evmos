@@ -17,6 +17,7 @@ const (
 	ProposalTypeRegisterCoin          string = "RegisterCoin"
 	ProposalTypeRegisterERC20         string = "RegisterERC20"
 	ProposalTypeToggleTokenConversion string = "ToggleTokenConversion" // #nosec
+	ProposalTypeUpdateRegisterCoin    string = "UpdateRegisterCoin"
 )
 
 // Implements Proposal Interface
@@ -24,15 +25,18 @@ var (
 	_ govtypes.Content = &RegisterCoinProposal{}
 	_ govtypes.Content = &RegisterERC20Proposal{}
 	_ govtypes.Content = &ToggleTokenConversionProposal{}
+	_ govtypes.Content = &UpdateRegisterCoinProposal{}
 )
 
 func init() {
 	govtypes.RegisterProposalType(ProposalTypeRegisterCoin)
 	govtypes.RegisterProposalType(ProposalTypeRegisterERC20)
 	govtypes.RegisterProposalType(ProposalTypeToggleTokenConversion)
+	govtypes.RegisterProposalType(ProposalTypeUpdateRegisterCoin)
 	govtypes.RegisterProposalTypeCodec(&RegisterCoinProposal{}, "erc20/RegisterCoinProposal")
 	govtypes.RegisterProposalTypeCodec(&RegisterERC20Proposal{}, "erc20/RegisterERC20Proposal")
 	govtypes.RegisterProposalTypeCodec(&ToggleTokenConversionProposal{}, "erc20/ToggleTokenConversionProposal")
+	govtypes.RegisterProposalTypeCodec(&UpdateRegisterCoinProposal{}, "erc20/UpdateRegisterCoinProposal")
 }
 
 // CreateDenomDescription generates a string with the coin description
@@ -163,4 +167,33 @@ func (ttcp *ToggleTokenConversionProposal) ValidateBasic() error {
 	}
 
 	return govtypes.ValidateAbstract(ttcp)
+}
+
+// ProposalRoute returns router key for this proposal
+func (*UpdateRegisterCoinProposal) ProposalRoute() string { return RouterKey }
+
+// ProposalType returns proposal type for this proposal
+func (*UpdateRegisterCoinProposal) ProposalType() string {
+	return ProposalTypeRegisterERC20
+}
+
+// ValidateBasic performs a stateless check of the proposal fields
+func (rtbp *UpdateRegisterCoinProposal) ValidateBasic() error {
+	if err := rtbp.Metadata.Validate(); err != nil {
+		return err
+	}
+
+	if err := ibctransfertypes.ValidateIBCDenom(rtbp.Metadata.Base); err != nil {
+		return err
+	}
+
+	if err := validateIBCVoucherMetadata(rtbp.Metadata); err != nil {
+		return err
+	}
+
+	if err := ethermint.ValidateAddress(rtbp.Erc20Address); err != nil {
+		return sdkerrors.Wrap(err, "ERC20 address")
+	}
+
+	return govtypes.ValidateAbstract(rtbp)
 }

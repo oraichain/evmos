@@ -85,6 +85,8 @@ func (k Keeper) OnRecvPacket(
 		return ack
 	}
 
+	// TODO: Need to also query legacy pair id to see if exists. If yes then we can burn legacy cosmos denom & mint current cosmos denom in pair, then convert to erc20
+
 	// Instead of converting just the received coins, convert the whole user balance
 	// which includes the received coins.
 	balance := k.bankKeeper.GetBalance(ctx, recipient, coin.Denom)

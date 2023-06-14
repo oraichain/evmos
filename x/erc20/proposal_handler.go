@@ -20,7 +20,8 @@ func NewErc20ProposalHandler(k *keeper.Keeper) govtypes.Handler {
 			return handleRegisterERC20Proposal(ctx, k, c)
 		case *types.ToggleTokenConversionProposal:
 			return handleToggleConversionProposal(ctx, k, c)
-
+		case *types.UpdateRegisterCoinProposal:
+			return handleUpdateRegisterCoinProposal(ctx, k, c)
 		default:
 			return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized %s proposal content type: %T", types.ModuleName, c)
 		}
@@ -68,6 +69,22 @@ func handleToggleConversionProposal(ctx sdk.Context, k *keeper.Keeper, p *types.
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeToggleTokenConversion,
+			sdk.NewAttribute(types.AttributeKeyCosmosCoin, pair.Denom),
+			sdk.NewAttribute(types.AttributeKeyERC20Token, pair.Erc20Address),
+		),
+	)
+
+	return nil
+}
+
+func handleUpdateRegisterCoinProposal(ctx sdk.Context, k *keeper.Keeper, p *types.UpdateRegisterCoinProposal) error {
+	pair, err := k.UpdateRegisterCoin(ctx, common.HexToAddress(p.Erc20Address), p.Metadata)
+	if err != nil {
+		return err
+	}
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeUpdateRegisterCoin,
 			sdk.NewAttribute(types.AttributeKeyCosmosCoin, pair.Denom),
 			sdk.NewAttribute(types.AttributeKeyERC20Token, pair.Erc20Address),
 		),

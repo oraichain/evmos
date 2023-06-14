@@ -199,6 +199,17 @@ func (k Keeper) ToggleConversion(
 	return pair, nil
 }
 
+// UpdateRegisterCoin update the token pair to map a new cosmos token to an existing erc20 contract
+func (k Keeper) UpdateRegisterCoin(
+	ctx sdk.Context,
+	contract common.Address,
+	coinMetadata banktypes.Metadata,
+) (*types.TokenPair, error) {
+	// TODO: implement this function
+	// need to store legacy pair id in this function
+	return &types.TokenPair{}, nil
+}
+
 // verifyMetadata verifies if the metadata matches the existing one, if not it
 // sets it to the store
 func (k Keeper) verifyMetadata(

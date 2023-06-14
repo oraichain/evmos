@@ -29,11 +29,13 @@ const (
 	prefixTokenPair = iota + 1
 	prefixTokenPairByERC20
 	prefixTokenPairByDenom
+	prefixLegacyTokenPairId
 )
 
 // KVStore key prefixes
 var (
-	KeyPrefixTokenPair        = []byte{prefixTokenPair}
-	KeyPrefixTokenPairByERC20 = []byte{prefixTokenPairByERC20}
-	KeyPrefixTokenPairByDenom = []byte{prefixTokenPairByDenom}
+	KeyPrefixTokenPair         = []byte{prefixTokenPair}
+	KeyPrefixTokenPairByERC20  = []byte{prefixTokenPairByERC20}
+	KeyPrefixTokenPairByDenom  = []byte{prefixTokenPairByDenom}
+	KeyPrefixLegacyTokenPairId = []byte{prefixLegacyTokenPairId}
 )

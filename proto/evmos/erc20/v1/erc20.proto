@@ -66,3 +66,18 @@ message ToggleTokenConversionProposal {
   // Cosmos base denomination
   string token = 3;
 }
+
+// UpdateRegisterCoinProposal is a gov Content type to update register coin proposal
+// of a token pair.
+message UpdateRegisterCoinProposal {
+  option (gogoproto.equal) = false;
+  // title of the proposal
+  string title = 1;
+  // proposal description
+  string description = 2;
+  // metadata of the native Cosmos coin
+  // contract address of ERC20 token
+  string erc20address = 3;
+  // metadata of the native Cosmos coin
+  cosmos.bank.v1beta1.Metadata metadata = 4 [ (gogoproto.nullable) = false ];
+}
