@@ -80,7 +80,7 @@ func (k Keeper) OnRecvPacket(
 		// so we can continue with the rest of the stack
 		// if yes, then we burn legacy & mint corresponding cosmos denom amount
 		coinDenom = k.ConvertLegacyToCurrentDenomMap(ctx, coin, recipient)
-		if pairID == nil {
+		if coinDenom == coin.Denom {
 			return ack
 		}
 	} else {
