@@ -64,6 +64,7 @@ func (k Keeper) OnRecvPacket(
 		packet.DestinationPort, packet.DestinationChannel,
 		data.Denom, data.Amount,
 	)
+	coinDenom := coin.Denom
 
 	// check if the coin is a native staking token
 	bondDenom := k.stakingKeeper.BondDenom(ctx)
@@ -78,21 +79,21 @@ func (k Keeper) OnRecvPacket(
 		// if also not registerd, conversion will fail
 		// so we can continue with the rest of the stack
 		// if yes, then we burn legacy & mint corresponding cosmos denom amount
-		pairID = k.ConvertLegacyToCurrentDenomMap(ctx, coin, recipient)
+		coinDenom = k.ConvertLegacyToCurrentDenomMap(ctx, coin, recipient)
 		if pairID == nil {
+			return ack
+		}
+	} else {
+		pair, _ := k.GetTokenPair(ctx, pairID)
+		if !pair.Enabled {
+			// no-op: continue with the rest of the stack without conversion
 			return ack
 		}
 	}
 
-	pair, _ := k.GetTokenPair(ctx, pairID)
-	if !pair.Enabled {
-		// no-op: continue with the rest of the stack without conversion
-		return ack
-	}
-
 	// Instead of converting just the received coins, convert the whole user balance
 	// which includes the received coins.
-	balance := k.bankKeeper.GetBalance(ctx, recipient, coin.Denom)
+	balance := k.bankKeeper.GetBalance(ctx, recipient, coinDenom)
 
 	// Build MsgConvertCoin, from recipient to recipient since IBC transfer already occurred
 	msg := types.NewMsgConvertCoin(balance, common.BytesToAddress(recipient.Bytes()), recipient)
@@ -110,7 +111,7 @@ func (k Keeper) OnRecvPacket(
 			[]string{types.ModuleName, "ibc", "on_recv", "total"},
 			1,
 			[]metrics.Label{
-				telemetry.NewLabel("denom", coin.Denom),
+				telemetry.NewLabel("denom", coinDenom),
 				telemetry.NewLabel("source_channel", packet.SourceChannel),
 				telemetry.NewLabel("source_port", packet.SourcePort),
 			},
@@ -192,19 +193,19 @@ func (k Keeper) ConvertCoinToERC20FromPacket(ctx sdk.Context, data transfertypes
 	return nil
 }
 
-func (k Keeper) ConvertLegacyToCurrentDenomMap(ctx sdk.Context, coin sdk.Coin, recipient sdk.AccAddress) []byte {
+func (k Keeper) ConvertLegacyToCurrentDenomMap(ctx sdk.Context, coin sdk.Coin, recipient sdk.AccAddress) string {
 
 	erc20ContractBytes := k.GetLegacyDenomMap(ctx, coin.Denom)
 	// no item
 	if erc20ContractBytes == nil {
-		return nil
+		return coin.Denom
 	}
 
 	pairID := k.GetERC20Map(ctx, common.BytesToAddress(erc20ContractBytes))
 	pair, _ := k.GetTokenPair(ctx, pairID)
 	if !pair.Enabled {
 		// no-op: continue with the rest of the stack without conversion
-		return nil
+		return coin.Denom
 	}
 	// we burn the old coin since they are no longer in use. We then mint the current new pair cosmos denom to automatically convert to the new coin
 	k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(coin))
@@ -214,5 +215,5 @@ func (k Keeper) ConvertLegacyToCurrentDenomMap(ctx sdk.Context, coin sdk.Coin, r
 	// TODO: should we assume that both coins have the same unit? How to process if they are in different units?
 	k.bankKeeper.MintCoins(ctx, types.ModuleName, coins)
 	k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, recipient, coins)
-	return pairID
+	return coin.Denom
 }

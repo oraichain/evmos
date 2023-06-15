@@ -134,14 +134,14 @@ func (suite *KeeperTestSuite) TestConvertLegacyToCurrentDenomMap() {
 		{
 			name: "passed - legacy denom not registered should return nil pair id",
 			malleate: func() sdk.Coin {
-				return sdk.NewCoin("foobar", sdk.NewInt(1))
+				return sdk.NewCoin("legacy", sdk.NewInt(1))
 			},
 			expPass: false,
 		},
 		{
 			name: "passed - Cannot find current token pair should return nil pair id",
 			malleate: func() sdk.Coin {
-				coin := sdk.NewCoin("foobar", sdk.NewInt(1))
+				coin := sdk.NewCoin("legacy", sdk.NewInt(1))
 				suite.app.Erc20Keeper.SetLegacyDenomMap(suite.ctx, coin.Denom, erc20Contract.Bytes())
 				suite.app.Erc20Keeper.SetERC20Map(suite.ctx, erc20Contract, []byte{1})
 				return coin
@@ -175,16 +175,14 @@ func (suite *KeeperTestSuite) TestConvertLegacyToCurrentDenomMap() {
 
 			coin := tc.malleate()
 
-			pairId := suite.app.Erc20Keeper.ConvertLegacyToCurrentDenomMap(suite.ctx, coin, sdk.AccAddress(recipient))
+			coinDenom := suite.app.Erc20Keeper.ConvertLegacyToCurrentDenomMap(suite.ctx, coin, sdk.AccAddress(recipient))
 			if tc.expPass {
-				suite.Require().NotNil(pairId)
-				pair, found := suite.app.Erc20Keeper.GetTokenPair(suite.ctx, pairId)
-				suite.Require().Equal(true, found)
-				suite.Require().NotNil(pair)
-				recipientBalance := suite.app.BankKeeper.GetBalance(suite.ctx, sdk.AccAddress(recipient), pair.Denom)
-				suite.Require().Equal(recipientBalance, sdk.NewCoin(pair.Denom, coin.Amount))
+				suite.Require().NotEmpty(coinDenom)
+				suite.Require().Equal(coinDenom, "current")
+				recipientBalance := suite.app.BankKeeper.GetBalance(suite.ctx, sdk.AccAddress(recipient), coinDenom)
+				suite.Require().Equal(recipientBalance, sdk.NewCoin(coinDenom, coin.Amount))
 			} else {
-				suite.Require().Nil(pairId)
+				suite.Require().Equal(coinDenom, "legacy")
 			}
 		})
 	}
