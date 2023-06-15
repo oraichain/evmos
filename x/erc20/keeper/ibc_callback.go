@@ -193,11 +193,13 @@ func (k Keeper) ConvertCoinToERC20FromPacket(ctx sdk.Context, data transfertypes
 }
 
 func (k Keeper) ConvertLegacyToCurrentDenomMap(ctx sdk.Context, coin sdk.Coin, recipient sdk.AccAddress) []byte {
-	if !k.IsLegacyDenomMapRegistered(ctx, coin.Denom) {
+
+	erc20ContractBytes := k.GetLegacyDenomMap(ctx, coin.Denom)
+	// no item
+	if erc20ContractBytes == nil {
 		return nil
 	}
 
-	erc20ContractBytes := k.GetLegacyDenomMap(ctx, coin.Denom)
 	pairID := k.GetERC20Map(ctx, common.BytesToAddress(erc20ContractBytes))
 	pair, _ := k.GetTokenPair(ctx, pairID)
 	if !pair.Enabled {
