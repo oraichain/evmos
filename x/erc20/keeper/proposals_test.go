@@ -469,3 +469,162 @@ func (suite KeeperTestSuite) TestToggleConverision() {
 		})
 	}
 }
+
+func (suite KeeperTestSuite) TestVerifyMetadata() {
+	metadata := banktypes.Metadata{
+		Description: "description",
+		Base:        cosmosTokenBase,
+		// NOTE: Denom units MUST be increasing
+		DenomUnits: []*banktypes.DenomUnit{
+			{
+				Denom:    cosmosTokenBase,
+				Exponent: 0,
+			},
+			{
+				Denom:    cosmosTokenDisplay,
+				Exponent: defaultExponent,
+			},
+		},
+		Name:    cosmosTokenBase,
+		Symbol:  erc20Symbol,
+		Display: cosmosTokenDisplay,
+	}
+
+	testCases := []struct {
+		name     string
+		malleate func()
+		expPass  bool
+	}{
+		{
+			"Denom metadata not found",
+			func() {
+
+			},
+			true,
+		},
+		{
+			"Denom metadata exists and have the same metadata as expected",
+			func() {
+				suite.app.BankKeeper.SetDenomMetaData(suite.ctx, metadata)
+			},
+			true,
+		},
+		{
+			"Denom metadata exists with the same base but different in other types",
+			func() {
+				otherMetadata := metadata
+				otherMetadata.Symbol = "Foobar"
+				suite.app.BankKeeper.SetDenomMetaData(suite.ctx, otherMetadata)
+			},
+			false,
+		},
+	}
+	for _, tc := range testCases {
+		suite.Run(fmt.Sprintf("Case %s", tc.name), func() {
+			suite.SetupTest() // reset
+			tc.malleate()
+
+			err := suite.app.Erc20Keeper.VerifyMetadata(suite.ctx, metadata)
+			suite.Commit()
+
+			expectedMetadata, _ := suite.app.BankKeeper.GetDenomMetaData(suite.ctx, metadata.Base)
+
+			if tc.expPass {
+				suite.Require().NoError(err, tc.name)
+				suite.Require().Equal(metadata, expectedMetadata)
+			} else {
+				suite.Require().Error(err, tc.name)
+			}
+		})
+	}
+}
+
+func (suite KeeperTestSuite) TestCoinMetadataSanityCheck() {
+	metadata := banktypes.Metadata{
+		Description: "description",
+		Base:        cosmosTokenBase,
+		// NOTE: Denom units MUST be increasing
+		DenomUnits: []*banktypes.DenomUnit{
+			{
+				Denom:    cosmosTokenBase,
+				Exponent: 0,
+			},
+			{
+				Denom:    cosmosTokenDisplay,
+				Exponent: defaultExponent,
+			},
+		},
+		Name:    cosmosTokenBase,
+		Symbol:  erc20Symbol,
+		Display: cosmosTokenDisplay,
+	}
+
+	testCases := []struct {
+		name     string
+		malleate func()
+		expPass  bool
+		expError string
+	}{
+		{
+			"Coin metadata contains EVM",
+			func() {
+				metadata.Base = "evm"
+			},
+			false,
+			"cannot register the EVM denomination",
+		},
+		{
+			"Denom already registered",
+			func() {
+				metadata.Base = cosmosTokenBase
+				suite.app.Erc20Keeper.SetDenomMap(suite.ctx, metadata.Base, []byte{})
+			},
+			false,
+			"coin denomination already registered:",
+		},
+		{
+			"Denom does not have any supply",
+			func() {
+			},
+			false,
+			"cannot have a supply of 0",
+		},
+		{
+			"Invalid metadata",
+			func() {
+				err := suite.app.BankKeeper.MintCoins(suite.ctx, inflationtypes.ModuleName, sdk.Coins{sdk.NewInt64Coin(metadata.Base, 1)})
+				suite.Require().NoError(err)
+				otherMetadata := metadata
+				otherMetadata.Symbol = "Foobar"
+				suite.app.BankKeeper.SetDenomMetaData(suite.ctx, otherMetadata)
+			},
+			false,
+			"coin metadata is invalid",
+		},
+		{
+			"Valid case",
+			func() {
+				err := suite.app.BankKeeper.MintCoins(suite.ctx, inflationtypes.ModuleName, sdk.Coins{sdk.NewInt64Coin(metadata.Base, 1)})
+				suite.Require().NoError(err)
+			},
+			true,
+			"",
+		},
+	}
+	for _, tc := range testCases {
+		suite.Run(fmt.Sprintf("Case %s", tc.name), func() {
+			suite.SetupTest() // reset
+			tc.malleate()
+
+			err := suite.app.Erc20Keeper.CoinMetadataSanityCheck(suite.ctx, metadata)
+			suite.Commit()
+
+			if tc.expPass {
+				suite.Require().NoError(err, tc.name)
+			} else {
+				suite.Require().Error(err, tc.name)
+				suite.Require().Contains(err.Error(), tc.expError)
+			}
+		})
+	}
+}

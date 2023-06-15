@@ -79,4 +79,4 @@ See our open positions on [Cosmos Jobs](https://jobs.cosmos.network/project/evmo
 
 ## Tests
 
-go test -v ./x/*/ -v --count=1
+go test -v ./x/*/ --count=1

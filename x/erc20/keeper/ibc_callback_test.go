@@ -55,6 +55,15 @@ func (suite *KeeperTestSuite) TestConvertCoinToERC20FromPacket() {
 				metadata, pair := suite.setupRegisterCoin()
 				suite.Require().NotNil(metadata)
 				suite.Require().NotNil(pair)
+				// Mint coins on account to simulate receiving ibc transfer
+				sender, err := sdk.AccAddressFromBech32(senderAddr)
+				suite.Require().NoError(err)
+				coinEvmos := sdk.NewCoin(pair.Denom, sdk.NewInt(10))
+				coins := sdk.NewCoins(coinEvmos)
+				err = suite.app.BankKeeper.MintCoins(suite.ctx, inflationtypes.ModuleName, coins)
+				suite.Require().NoError(err)
+				err = suite.app.BankKeeper.SendCoinsFromModuleToAccount(suite.ctx, inflationtypes.ModuleName, sender, coins)
+				suite.Require().NoError(err)
 				return transfertypes.NewFungibleTokenPacketData(metadata.Base, "10", senderAddr, "")
 			},
 			expPass: true,

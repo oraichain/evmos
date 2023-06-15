@@ -25,31 +25,9 @@ func (k Keeper) RegisterCoin(
 		)
 	}
 
-	// Prohibit denominations that contain the evm denom
-	if strings.Contains(coinMetadata.Base, "evm") {
-		return nil, sdkerrors.Wrapf(
-			types.ErrEVMDenom, "cannot register the EVM denomination %s", coinMetadata.Base,
-		)
-	}
-
-	// Check if denomination is already registered
-	if k.IsDenomRegistered(ctx, coinMetadata.Name) {
-		return nil, sdkerrors.Wrapf(
-			types.ErrTokenPairAlreadyExists, "coin denomination already registered: %s", coinMetadata.Name,
-		)
-	}
-
-	// Check if the coin exists by ensuring the supply is set
-	if !k.bankKeeper.HasSupply(ctx, coinMetadata.Base) {
-		return nil, sdkerrors.Wrapf(
-			sdkerrors.ErrInvalidCoins, "base denomination '%s' cannot have a supply of 0", coinMetadata.Base,
-		)
-	}
-
-	if err := k.verifyMetadata(ctx, coinMetadata); err != nil {
-		return nil, sdkerrors.Wrapf(
-			types.ErrInternalTokenPair, "coin metadata is invalid %s", coinMetadata.Name,
-		)
+	err := k.CoinMetadataSanityCheck(ctx, coinMetadata)
+	if err != nil {
+		return nil, err
 	}
 
 	addr, err := k.DeployERC20Contract(ctx, coinMetadata)
@@ -205,14 +183,43 @@ func (k Keeper) UpdateRegisterCoin(
 	contract common.Address,
 	coinMetadata banktypes.Metadata,
 ) (*types.TokenPair, error) {
-	// TODO: implement this function
-	// need to store legacy pair id in this function
-	return &types.TokenPair{}, nil
+	// Check if the conversion is globally enabled
+	params := k.GetParams(ctx)
+	if !params.EnableErc20 {
+		return nil, sdkerrors.Wrap(
+			types.ErrERC20Disabled, "update registration is currently disabled by governance",
+		)
+	}
+
+	err := k.CoinMetadataSanityCheck(ctx, coinMetadata)
+	if err != nil {
+		return nil, err
+	}
+
+	// we clean up old mapping pair first
+	oldPair, exist := k.GetTokenPair(ctx, k.GetTokenPairID(ctx, contract.String()))
+	if !exist {
+		return nil, sdkerrors.Wrapf(
+			types.ErrTokenPairNotFound, "Cannot find old pair given the erc20 contract address %s", contract.String(),
+		)
+	}
+	k.deleteTokenPair(ctx, oldPair.GetID())
+	k.deleteDenomMap(ctx, oldPair.GetDenom())
+	// no need to delete erc20 mapping because we are overriding it below
+
+	// create new pair based on the new coin metadata
+	pair := types.NewTokenPair(contract, coinMetadata.Base, true, types.OWNER_MODULE)
+
+	k.SetTokenPair(ctx, pair)
+	k.SetDenomMap(ctx, pair.Denom, pair.GetID())
+	k.SetERC20Map(ctx, common.HexToAddress(pair.Erc20Address), pair.GetID())
+
+	return &pair, nil
 }
 
-// verifyMetadata verifies if the metadata matches the existing one, if not it
+// VerifyMetadata verifies if the metadata matches the existing one, if not it
 // sets it to the store
-func (k Keeper) verifyMetadata(
+func (k Keeper) VerifyMetadata(
 	ctx sdk.Context,
 	coinMetadata banktypes.Metadata,
 ) error {
@@ -224,4 +231,34 @@ func (k Keeper) verifyMetadata(
 
 	// If it already existed, check that is equal to what is stored
 	return types.EqualMetadata(meta, coinMetadata)
+}
+
+func (k Keeper) CoinMetadataSanityCheck(ctx sdk.Context, coinMetadata banktypes.Metadata) error {
+	// Prohibit denominations that contain the evm denom
+	if strings.Contains(coinMetadata.Base, "evm") {
+		return sdkerrors.Wrapf(
+			types.ErrEVMDenom, "cannot register the EVM denomination %s", coinMetadata.Base,
+		)
+	}
+
+	// Check if denomination is already registered
+	if k.IsDenomRegistered(ctx, coinMetadata.Name) {
+		return sdkerrors.Wrapf(
+			types.ErrTokenPairAlreadyExists, "coin denomination already registered: %s", coinMetadata.Name,
+		)
+	}
+
+	// Check if the coin exists by ensuring the supply is set
+	if !k.bankKeeper.HasSupply(ctx, coinMetadata.Base) {
+		return sdkerrors.Wrapf(
+			sdkerrors.ErrInvalidCoins, "base denomination '%s' cannot have a supply of 0", coinMetadata.Base,
+		)
+	}
+
+	if err := k.VerifyMetadata(ctx, coinMetadata); err != nil {
+		return sdkerrors.Wrapf(
+			types.ErrInternalTokenPair, "coin metadata is invalid %s", coinMetadata.Name,
+		)
+	}
+	return nil
 }
