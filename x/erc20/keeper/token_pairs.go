@@ -86,6 +86,12 @@ func (k Keeper) GetDenomMap(ctx sdk.Context, denom string) []byte {
 	return store.Get([]byte(denom))
 }
 
+// GetLegacyDenomMap returns the legacy token pair id given the denom
+func (k Keeper) GetLegacyDenomMap(ctx sdk.Context, denom string) []byte {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixLegacyTokenPairId)
+	return store.Get([]byte(denom))
+}
+
 // SetERC20Map sets the token pair id for the given address
 func (k Keeper) SetERC20Map(ctx sdk.Context, erc20 common.Address, id []byte) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixTokenPairByERC20)
@@ -110,6 +116,12 @@ func (k Keeper) deleteDenomMap(ctx sdk.Context, denom string) {
 	store.Delete([]byte(denom))
 }
 
+// SetLegacyDenomMap sets the legacy token pair id
+func (k Keeper) SetLegacyDenomMap(ctx sdk.Context, denom string, id []byte) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixLegacyTokenPairId)
+	store.Set([]byte(denom), id)
+}
+
 // IsTokenPairRegistered - check if registered token tokenPair is registered
 func (k Keeper) IsTokenPairRegistered(ctx sdk.Context, id []byte) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixTokenPair)
@@ -125,5 +137,11 @@ func (k Keeper) IsERC20Registered(ctx sdk.Context, erc20 common.Address) bool {
 // IsDenomRegistered check if registered coin denom is registered
 func (k Keeper) IsDenomRegistered(ctx sdk.Context, denom string) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixTokenPairByDenom)
+	return store.Has([]byte(denom))
+}
+
+// IsLegacyDenomMapRegistered check if legacy pair token id is registered
+func (k Keeper) IsLegacyDenomMapRegistered(ctx sdk.Context, denom string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixLegacyTokenPairId)
 	return store.Has([]byte(denom))
 }

@@ -73,10 +73,23 @@ func (k Keeper) OnRecvPacket(
 	}
 
 	pairID := k.GetTokenPairID(ctx, coin.Denom)
+	willMint := false
 	if len(pairID) == 0 {
-		// short-circuit: if the denom is not registered, conversion will fail
+		// if the denom is not registered, we shall check if the denom is registered as a legacy or not.
+		// if also not registerd, conversion will fail
 		// so we can continue with the rest of the stack
-		return ack
+		// if yes, then we burn legacy & mint corresponding cosmos denom amount
+		if !k.IsLegacyDenomMapRegistered(ctx, coin.Denom) {
+			return ack
+		}
+
+		oldPairId := k.GetLegacyDenomMap(ctx, coin.Denom)
+		oldPair, found := k.GetTokenPair(ctx, oldPairId)
+		if !found {
+			return ack
+		}
+		pairID = k.GetERC20Map(ctx, oldPair.GetERC20Contract())
+		willMint = true
 	}
 
 	pair, _ := k.GetTokenPair(ctx, pairID)
@@ -84,8 +97,21 @@ func (k Keeper) OnRecvPacket(
 		// no-op: continue with the rest of the stack without conversion
 		return ack
 	}
-
-	// TODO: Need to also query legacy pair id to see if exists. If yes then we can burn legacy cosmos denom & mint current cosmos denom in pair, then convert to erc20
+	// we mint new cosmos denom because it is in pair with the current erc20 address and the user is trying to convert using legacy coin
+	if willMint {
+		// we burn the old coin since they are no longer in use. We then mint the current new pair cosmos denom to automatically convert to the new coin
+		k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(coin))
+		// re-assign coin to the correct cosmos denom.
+		coin = types.GetReceivedCoin(
+			packet.SourcePort, packet.SourceChannel,
+			packet.DestinationPort, packet.DestinationChannel,
+			pair.GetDenom(), data.Amount,
+		)
+		coins := sdk.NewCoins(coin)
+		// TODO: should we assume that both coins have the same unit? How to process if they are in different units?
+		k.bankKeeper.MintCoins(ctx, types.ModuleName, coins)
+		k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, recipient, coins)
+	}
 
 	// Instead of converting just the received coins, convert the whole user balance
 	// which includes the received coins.
