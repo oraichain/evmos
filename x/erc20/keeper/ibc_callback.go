@@ -78,7 +78,7 @@ func (k Keeper) OnRecvPacket(
 		// if also not registerd, conversion will fail
 		// so we can continue with the rest of the stack
 		// if yes, then we burn legacy & mint corresponding cosmos denom amount
-		pairID = k.ConvertLegacyToCurrentDenomMap(ctx, coin, data.Amount, recipient)
+		pairID = k.ConvertLegacyToCurrentDenomMap(ctx, coin, recipient)
 		if pairID == nil {
 			return ack
 		}
@@ -192,17 +192,13 @@ func (k Keeper) ConvertCoinToERC20FromPacket(ctx sdk.Context, data transfertypes
 	return nil
 }
 
-func (k Keeper) ConvertLegacyToCurrentDenomMap(ctx sdk.Context, coin sdk.Coin, amount string, recipient sdk.AccAddress) []byte {
+func (k Keeper) ConvertLegacyToCurrentDenomMap(ctx sdk.Context, coin sdk.Coin, recipient sdk.AccAddress) []byte {
 	if !k.IsLegacyDenomMapRegistered(ctx, coin.Denom) {
 		return nil
 	}
 
-	oldPairId := k.GetLegacyDenomMap(ctx, coin.Denom)
-	oldPair, found := k.GetTokenPair(ctx, oldPairId)
-	if !found {
-		return nil
-	}
-	pairID := k.GetERC20Map(ctx, oldPair.GetERC20Contract())
+	erc20ContractBytes := k.GetLegacyDenomMap(ctx, coin.Denom)
+	pairID := k.GetERC20Map(ctx, common.BytesToAddress(erc20ContractBytes))
 	pair, _ := k.GetTokenPair(ctx, pairID)
 	if !pair.Enabled {
 		// no-op: continue with the rest of the stack without conversion
@@ -211,8 +207,7 @@ func (k Keeper) ConvertLegacyToCurrentDenomMap(ctx sdk.Context, coin sdk.Coin, a
 	// we burn the old coin since they are no longer in use. We then mint the current new pair cosmos denom to automatically convert to the new coin
 	k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(coin))
 	// re-assign coin to the correct cosmos denom.
-	amountInt, _ := sdk.NewIntFromString(amount)
-	coin = sdk.NewCoin(pair.Denom, amountInt)
+	coin.Denom = pair.Denom
 	coins := sdk.NewCoins(coin)
 	// TODO: should we assume that both coins have the same unit? How to process if they are in different units?
 	k.bankKeeper.MintCoins(ctx, types.ModuleName, coins)

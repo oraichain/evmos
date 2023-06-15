@@ -88,7 +88,7 @@ func (k Keeper) GetDenomMap(ctx sdk.Context, denom string) []byte {
 
 // GetLegacyDenomMap returns the legacy token pair id given the denom
 func (k Keeper) GetLegacyDenomMap(ctx sdk.Context, denom string) []byte {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixLegacyTokenPairId)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixLegacyTokenDenomMap)
 	return store.Get([]byte(denom))
 }
 
@@ -117,9 +117,9 @@ func (k Keeper) deleteDenomMap(ctx sdk.Context, denom string) {
 }
 
 // SetLegacyDenomMap sets the legacy token pair id
-func (k Keeper) SetLegacyDenomMap(ctx sdk.Context, denom string, id []byte) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixLegacyTokenPairId)
-	store.Set([]byte(denom), id)
+func (k Keeper) SetLegacyDenomMap(ctx sdk.Context, denom string, contract []byte) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixLegacyTokenDenomMap)
+	store.Set([]byte(denom), contract)
 }
 
 // IsTokenPairRegistered - check if registered token tokenPair is registered
@@ -142,6 +142,6 @@ func (k Keeper) IsDenomRegistered(ctx sdk.Context, denom string) bool {
 
 // IsLegacyDenomMapRegistered check if legacy pair token id is registered
 func (k Keeper) IsLegacyDenomMapRegistered(ctx sdk.Context, denom string) bool {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixLegacyTokenPairId)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixLegacyTokenDenomMap)
 	return store.Has([]byte(denom))
 }

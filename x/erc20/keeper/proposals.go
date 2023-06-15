@@ -213,7 +213,7 @@ func (k Keeper) UpdateRegisterCoin(
 	k.SetTokenPair(ctx, pair)
 	k.SetDenomMap(ctx, pair.Denom, pair.GetID())
 	k.SetERC20Map(ctx, common.HexToAddress(pair.Erc20Address), pair.GetID())
-	k.SetLegacyDenomMap(ctx, oldPair.Denom, oldPair.GetID())
+	k.SetLegacyDenomMap(ctx, oldPair.Denom, oldPair.GetERC20Contract().Bytes())
 
 	return &pair, nil
 }

@@ -4,8 +4,10 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
 
 	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
+	erc20types "github.com/evmos/evmos/v9/x/erc20/types"
 
 	inflationtypes "github.com/evmos/evmos/v9/x/inflation/types"
 )
@@ -114,6 +116,75 @@ func (suite *KeeperTestSuite) TestConvertCoinToERC20FromPacket() {
 				suite.Require().NoError(err)
 			} else {
 				suite.Require().Error(err)
+			}
+		})
+	}
+}
+
+func (suite *KeeperTestSuite) TestConvertLegacyToCurrentDenomMap() {
+	recipient := "evmos18qn2jkekwyn6ta9ycsj50hmzwagnzzuj4mv7a3"
+	erc20Contract := common.HexToAddress("0xdac17f958d2ee523a2206206994597c13d831ec7")
+
+	testCases := []struct {
+		name     string
+		malleate func() sdk.Coin
+		transfer transfertypes.FungibleTokenPacketData
+		expPass  bool
+	}{
+		{
+			name: "passed - legacy denom not registered should return nil pair id",
+			malleate: func() sdk.Coin {
+				return sdk.NewCoin("foobar", sdk.NewInt(1))
+			},
+			expPass: false,
+		},
+		{
+			name: "passed - Cannot find current token pair should return nil pair id",
+			malleate: func() sdk.Coin {
+				coin := sdk.NewCoin("foobar", sdk.NewInt(1))
+				suite.app.Erc20Keeper.SetLegacyDenomMap(suite.ctx, coin.Denom, erc20Contract.Bytes())
+				suite.app.Erc20Keeper.SetERC20Map(suite.ctx, erc20Contract, []byte{1})
+				return coin
+			},
+			expPass: false,
+		},
+		{
+			name: "passed - ok",
+			malleate: func() sdk.Coin {
+				coin := sdk.NewCoin("legacy", sdk.NewInt(1))
+				suite.app.Erc20Keeper.SetLegacyDenomMap(suite.ctx, coin.Denom, erc20Contract.Bytes())
+				suite.app.Erc20Keeper.SetERC20Map(suite.ctx, erc20Contract, []byte{1})
+				pair := erc20types.TokenPair{
+					Erc20Address:  erc20Contract.Hex(),
+					Denom:         "current",
+					Enabled:       true,
+					ContractOwner: erc20types.OWNER_MODULE,
+				}
+				suite.app.Erc20Keeper.SetTokenPair(suite.ctx, pair)
+				// mint legacy coin so we can burn it later in the logic
+				suite.app.BankKeeper.MintCoins(suite.ctx, erc20types.ModuleName, sdk.NewCoins(coin))
+				return coin
+			},
+			expPass: false,
+		},
+	}
+	for _, tc := range testCases {
+		suite.Run(fmt.Sprintf("Case %s", tc.name), func() {
+			suite.mintFeeCollector = true
+			suite.SetupTest() // reset
+
+			coin := tc.malleate()
+
+			pairId := suite.app.Erc20Keeper.ConvertLegacyToCurrentDenomMap(suite.ctx, coin, sdk.AccAddress(recipient))
+			if tc.expPass {
+				suite.Require().NotNil(pairId)
+				pair, found := suite.app.Erc20Keeper.GetTokenPair(suite.ctx, pairId)
+				suite.Require().Equal(true, found)
+				suite.Require().NotNil(pair)
+				recipientBalance := suite.app.BankKeeper.GetBalance(suite.ctx, sdk.AccAddress(recipient), pair.Denom)
+				suite.Require().Equal(recipientBalance, sdk.NewCoin(pair.Denom, coin.Amount))
+			} else {
+				suite.Require().Nil(pairId)
 			}
 		})
 	}

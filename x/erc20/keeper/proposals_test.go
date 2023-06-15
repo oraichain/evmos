@@ -649,7 +649,6 @@ func (suite KeeperTestSuite) TestUpdateRegisterCoin() {
 		Display: cosmosTokenDisplay,
 	}
 	erc20Address := "0x80b5a32E4F032B2a058b4F29EC95EEfEEB87aDcd"
-	var pairId []byte
 
 	testCases := []struct {
 		name     string
@@ -788,8 +787,7 @@ func (suite KeeperTestSuite) TestUpdateRegisterCoin() {
 				metadata.Base = cosmosTokenBase
 				err := suite.app.BankKeeper.MintCoins(suite.ctx, inflationtypes.ModuleName, sdk.Coins{sdk.NewInt64Coin(metadata.Base, 1)})
 				suite.Require().NoError(err)
-				pair, _ := suite.app.Erc20Keeper.RegisterCoin(suite.ctx, metadata)
-				pairId = pair.GetID()
+				suite.app.Erc20Keeper.RegisterCoin(suite.ctx, metadata)
 				// prepare to update register coin with this new coin
 				metadata.Base = "newcoin"
 				metadata.Name = "newcoin"
@@ -809,8 +807,8 @@ func (suite KeeperTestSuite) TestUpdateRegisterCoin() {
 
 			if tc.expPass {
 				suite.Require().NoError(err, tc.name)
-				legacyPairId := suite.app.Erc20Keeper.GetLegacyDenomMap(suite.ctx, cosmosTokenBase)
-				suite.Require().Equal(legacyPairId, pairId)
+				erc20Address := suite.app.Erc20Keeper.GetLegacyDenomMap(suite.ctx, cosmosTokenBase)
+				suite.Require().Equal(erc20Address, pair.GetERC20Contract().Bytes())
 				currentPairId := suite.app.Erc20Keeper.GetDenomMap(suite.ctx, metadata.Base)
 				suite.Require().Equal(pair.GetID(), currentPairId)
 			} else {
