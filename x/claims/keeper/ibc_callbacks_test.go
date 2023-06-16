@@ -66,12 +66,12 @@ func (suite *KeeperTestSuite) TestAckknowledgementPacket() {
 		{
 			"error - no escrowed funds",
 			func() {
-				addr, err := sdk.AccAddressFromBech32("evmos1x2w87cvt5mqjncav4lxy8yfreynn273xn5335v")
+				addr, err := sdk.AccAddressFromBech32("oraie16yefkqyzshnrvz4sxzufndyfphnkajs9rmhrht")
 				suite.Require().NoError(err)
 
 				mockpacket.Data = transfertypes.ModuleCdc.MustMarshalJSON(
 					&transfertypes.FungibleTokenPacketData{
-						Sender:   "evmos1x2w87cvt5mqjncav4lxy8yfreynn273xn5335v",
+						Sender:   "oraie16yefkqyzshnrvz4sxzufndyfphnkajs9rmhrht",
 						Receiver: "cosmos1qql8ag4cluz6r4dz28p3w00dnc9w8ueulg2gmc",
 					},
 				)
@@ -87,12 +87,12 @@ func (suite *KeeperTestSuite) TestAckknowledgementPacket() {
 			func() {
 				suite.SetupTestWithEscrow()
 
-				addr, err := sdk.AccAddressFromBech32("evmos1x2w87cvt5mqjncav4lxy8yfreynn273xn5335v")
+				addr, err := sdk.AccAddressFromBech32("oraie16yefkqyzshnrvz4sxzufndyfphnkajs9rmhrht")
 				suite.Require().NoError(err)
 
 				mockpacket.Data = transfertypes.ModuleCdc.MustMarshalJSON(
 					&transfertypes.FungibleTokenPacketData{
-						Sender:   "evmos1x2w87cvt5mqjncav4lxy8yfreynn273xn5335v",
+						Sender:   "oraie16yefkqyzshnrvz4sxzufndyfphnkajs9rmhrht",
 						Receiver: "cosmos1qql8ag4cluz6r4dz28p3w00dnc9w8ueulg2gmc",
 					},
 				)
@@ -109,12 +109,12 @@ func (suite *KeeperTestSuite) TestAckknowledgementPacket() {
 			func() {
 				suite.SetupTestWithEscrow()
 
-				addr, err := sdk.AccAddressFromBech32("evmos1x2w87cvt5mqjncav4lxy8yfreynn273xn5335v")
+				addr, err := sdk.AccAddressFromBech32("oraie16yefkqyzshnrvz4sxzufndyfphnkajs9rmhrht")
 				suite.Require().NoError(err)
 
 				mockpacket.Data = transfertypes.ModuleCdc.MustMarshalJSON(
 					&transfertypes.FungibleTokenPacketData{
-						Sender:   "evmos1x2w87cvt5mqjncav4lxy8yfreynn273xn5335v",
+						Sender:   "oraie16yefkqyzshnrvz4sxzufndyfphnkajs9rmhrht",
 						Receiver: "cosmos1qql8ag4cluz6r4dz28p3w00dnc9w8ueulg2gmc",
 					},
 				)
@@ -149,8 +149,8 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 	secpAddr := sdk.AccAddress(pk.PubKey().Address())
 	secpAddrEvmos := secpAddr.String()
 	secpAddrCosmos := sdk.MustBech32ifyAddressBytes(sdk.Bech32MainPrefix, secpAddr)
-	senderStr := "evmos1sv9m0g7ycejwr3s369km58h5qe7xj77hvcxrms"
-	receiverStr := "evmos1hf0468jjpe6m6vx38s97z2qqe8ldu0njdyf625"
+	senderStr := "oraie1pda2qlyjfn7k56s6hr5vh8vz3j3jnah4fyx4s3"
+	receiverStr := "oraie16yefkqyzshnrvz4sxzufndyfphnkajs9rmhrht"
 	sender, err := sdk.AccAddressFromBech32(senderStr)
 	suite.Require().NoError(err)
 	receiver, err := sdk.AccAddressFromBech32(receiverStr)

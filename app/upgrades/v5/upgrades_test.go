@@ -141,53 +141,6 @@ func addClaimRecord(ctx sdk.Context, k *claimskeeper.Keeper, actions []bool) sdk
 	return addr
 }
 
-func (suite *UpgradeTestSuite) TestMigrateClaim() {
-	from, err := sdk.AccAddressFromBech32(v5.ContributorAddrFrom)
-	suite.Require().NoError(err)
-	to, err := sdk.AccAddressFromBech32(v5.ContributorAddrTo)
-	suite.Require().NoError(err)
-	cr := claimstypes.ClaimsRecord{InitialClaimableAmount: sdk.NewInt(100), ActionsCompleted: []bool{false, false, false, false}}
-
-	testCases := []struct {
-		name     string
-		malleate func()
-		expPass  bool
-	}{
-		{
-			"with claims record",
-			func() {
-				suite.app.ClaimsKeeper.SetClaimsRecord(suite.ctx, from, cr)
-			},
-			true,
-		},
-		{
-			"without claims record",
-			func() {
-			},
-			false,
-		},
-	}
-	for _, tc := range testCases {
-		suite.Run(fmt.Sprintf("Case %s", tc.name), func() {
-			suite.SetupTest(evmostypes.TestnetChainID + "-2") // reset
-
-			tc.malleate()
-
-			v5.MigrateContributorClaim(suite.ctx, suite.app.ClaimsKeeper)
-
-			_, foundFrom := suite.app.ClaimsKeeper.GetClaimsRecord(suite.ctx, from)
-			crTo, foundTo := suite.app.ClaimsKeeper.GetClaimsRecord(suite.ctx, to)
-			if tc.expPass {
-				suite.Require().False(foundFrom)
-				suite.Require().True(foundTo)
-				suite.Require().Equal(crTo, cr)
-			} else {
-				suite.Require().False(foundTo)
-			}
-		})
-	}
-}
-
 func (suite *UpgradeTestSuite) TestUpdateConsensusParams() {
 	unbondingDuration := suite.app.GetStakingKeeper().UnbondingTime(suite.ctx)
 

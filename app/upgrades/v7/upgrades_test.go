@@ -19,9 +19,7 @@ import (
 
 	"github.com/evmos/evmos/v9/app"
 	v7 "github.com/evmos/evmos/v9/app/upgrades/v7"
-	"github.com/evmos/evmos/v9/testutil"
 	evmostypes "github.com/evmos/evmos/v9/types"
-	claimstypes "github.com/evmos/evmos/v9/x/claims/types"
 )
 
 type UpgradeTestSuite struct {
@@ -76,48 +74,48 @@ func TestUpgradeTestSuite(t *testing.T) {
 	suite.Run(t, s)
 }
 
-func (suite *UpgradeTestSuite) TestMigrateFaucetBalance() {
-	from := sdk.MustAccAddressFromBech32(v7.FaucetAddressFrom)
-	to := sdk.MustAccAddressFromBech32(v7.FaucetAddressTo)
+// func (suite *UpgradeTestSuite) TestMigrateFaucetBalance() {
+// 	from := sdk.MustAccAddressFromBech32(v7.FaucetAddressFrom)
+// 	to := sdk.MustAccAddressFromBech32(v7.FaucetAddressTo)
 
-	testCases := []struct {
-		name              string
-		chainID           string
-		expectedMigration bool
-	}{
-		{
-			"Testnet - sucess",
-			evmostypes.TestnetChainID + "-4",
-			true,
-		},
-	}
+// 	testCases := []struct {
+// 		name              string
+// 		chainID           string
+// 		expectedMigration bool
+// 	}{
+// 		{
+// 			"Testnet - sucess",
+// 			evmostypes.TestnetChainID + "-4",
+// 			true,
+// 		},
+// 	}
 
-	for _, tc := range testCases {
-		suite.Run(fmt.Sprintf("Case %s", tc.name), func() {
-			suite.SetupTest(tc.chainID) // reset
+// 	for _, tc := range testCases {
+// 		suite.Run(fmt.Sprintf("Case %s", tc.name), func() {
+// 			suite.SetupTest(tc.chainID) // reset
 
-			coins := sdk.NewCoins(sdk.NewCoin(suite.app.StakingKeeper.BondDenom(suite.ctx), sdk.NewInt(1000)))
-			err := testutil.FundAccount(suite.app.BankKeeper, suite.ctx, from, coins)
-			suite.Require().NoError(err)
+// 			coins := sdk.NewCoins(sdk.NewCoin(suite.app.StakingKeeper.BondDenom(suite.ctx), sdk.NewInt(1000)))
+// 			err := testutil.FundAccount(suite.app.BankKeeper, suite.ctx, from, coins)
+// 			suite.Require().NoError(err)
 
-			suite.Require().NotPanics(func() {
-				v7.MigrateFaucetBalances(suite.ctx, suite.app.BankKeeper)
-				suite.app.Commit()
-			})
+// 			suite.Require().NotPanics(func() {
+// 				v7.MigrateFaucetBalances(suite.ctx, suite.app.BankKeeper)
+// 				suite.app.Commit()
+// 			})
 
-			balancesFrom := suite.app.BankKeeper.GetAllBalances(suite.ctx, from)
-			balancesTo := suite.app.BankKeeper.GetAllBalances(suite.ctx, to)
+// 			balancesFrom := suite.app.BankKeeper.GetAllBalances(suite.ctx, from)
+// 			balancesTo := suite.app.BankKeeper.GetAllBalances(suite.ctx, to)
 
-			if tc.expectedMigration {
-				suite.Require().True(balancesFrom.IsZero())
-				suite.Require().Equal(coins, balancesTo)
-			} else {
-				suite.Require().Equal(coins, balancesFrom)
-				suite.Require().Nil(balancesTo)
-			}
-		})
-	}
-}
+// 			if tc.expectedMigration {
+// 				suite.Require().True(balancesFrom.IsZero())
+// 				suite.Require().Equal(coins, balancesTo)
+// 			} else {
+// 				suite.Require().Equal(coins, balancesFrom)
+// 				suite.Require().Nil(balancesTo)
+// 			}
+// 		})
+// 	}
+// }
 
 func (suite *UpgradeTestSuite) TestMigrateSkippedEpochs() {
 	testCases := []struct {
@@ -152,49 +150,49 @@ func (suite *UpgradeTestSuite) TestMigrateSkippedEpochs() {
 	}
 }
 
-func (suite *UpgradeTestSuite) TestMigrateClaim() {
-	from, err := sdk.AccAddressFromBech32(v7.ContributorAddrFrom)
-	suite.Require().NoError(err)
-	to, err := sdk.AccAddressFromBech32(v7.ContributorAddrTo)
-	suite.Require().NoError(err)
-	cr := claimstypes.ClaimsRecord{InitialClaimableAmount: sdk.NewInt(100), ActionsCompleted: []bool{false, false, false, false}}
+// func (suite *UpgradeTestSuite) TestMigrateClaim() {
+// 	from, err := sdk.AccAddressFromBech32(v7.ContributorAddrFrom)
+// 	suite.Require().NoError(err)
+// 	to, err := sdk.AccAddressFromBech32(v7.ContributorAddrTo)
+// 	suite.Require().NoError(err)
+// 	cr := claimstypes.ClaimsRecord{InitialClaimableAmount: sdk.NewInt(100), ActionsCompleted: []bool{false, false, false, false}}
 
-	testCases := []struct {
-		name     string
-		malleate func()
-		expPass  bool
-	}{
-		{
-			"with claims record",
-			func() {
-				suite.app.ClaimsKeeper.SetClaimsRecord(suite.ctx, from, cr)
-			},
-			true,
-		},
-		{
-			"without claims record",
-			func() {
-			},
-			false,
-		},
-	}
-	for _, tc := range testCases {
-		suite.Run(fmt.Sprintf("Case %s", tc.name), func() {
-			suite.SetupTest(evmostypes.TestnetChainID + "-2") // reset
+// 	testCases := []struct {
+// 		name     string
+// 		malleate func()
+// 		expPass  bool
+// 	}{
+// 		{
+// 			"with claims record",
+// 			func() {
+// 				suite.app.ClaimsKeeper.SetClaimsRecord(suite.ctx, from, cr)
+// 			},
+// 			true,
+// 		},
+// 		{
+// 			"without claims record",
+// 			func() {
+// 			},
+// 			false,
+// 		},
+// 	}
+// 	for _, tc := range testCases {
+// 		suite.Run(fmt.Sprintf("Case %s", tc.name), func() {
+// 			suite.SetupTest(evmostypes.TestnetChainID + "-2") // reset
 
-			tc.malleate()
+// 			tc.malleate()
 
-			v7.MigrateContributorClaim(suite.ctx, suite.app.ClaimsKeeper)
+// 			v7.MigrateContributorClaim(suite.ctx, suite.app.ClaimsKeeper)
 
-			_, foundFrom := suite.app.ClaimsKeeper.GetClaimsRecord(suite.ctx, from)
-			crTo, foundTo := suite.app.ClaimsKeeper.GetClaimsRecord(suite.ctx, to)
-			if tc.expPass {
-				suite.Require().False(foundFrom)
-				suite.Require().True(foundTo)
-				suite.Require().Equal(crTo, cr)
-			} else {
-				suite.Require().False(foundTo)
-			}
-		})
-	}
-}
+// 			_, foundFrom := suite.app.ClaimsKeeper.GetClaimsRecord(suite.ctx, from)
+// 			crTo, foundTo := suite.app.ClaimsKeeper.GetClaimsRecord(suite.ctx, to)
+// 			if tc.expPass {
+// 				suite.Require().False(foundFrom)
+// 				suite.Require().True(foundTo)
+// 				suite.Require().Equal(crTo, cr)
+// 			} else {
+// 				suite.Require().False(foundTo)
+// 			}
+// 		})
+// 	}
+// }

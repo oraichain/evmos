@@ -15,7 +15,7 @@ import (
 var erc20Denom = "erc20/0xdac17f958d2ee523a2206206994597c13d831ec7"
 
 func (suite *KeeperTestSuite) TestConvertCoinToERC20FromPacket() {
-	senderAddr := "evmos1x2w87cvt5mqjncav4lxy8yfreynn273xn5335v"
+	senderAddr := "oraie16yefkqyzshnrvz4sxzufndyfphnkajs9rmhrht"
 
 	testCases := []struct {
 		name     string
@@ -122,7 +122,7 @@ func (suite *KeeperTestSuite) TestConvertCoinToERC20FromPacket() {
 }
 
 func (suite *KeeperTestSuite) TestConvertLegacyToCurrentDenomMap() {
-	recipient := "evmos18qn2jkekwyn6ta9ycsj50hmzwagnzzuj4mv7a3"
+	recipient := "oraie16yefkqyzshnrvz4sxzufndyfphnkajs9rmhrht"
 	erc20Contract := common.HexToAddress("0xdac17f958d2ee523a2206206994597c13d831ec7")
 
 	testCases := []struct {

@@ -78,8 +78,8 @@ func TestGenesisTestSuite(t *testing.T) {
 
 var (
 	now  = time.Now().UTC()
-	acc1 = sdk.MustAccAddressFromBech32("evmos1qxx0fdsmruzuar2fay88lfw6sce6emamyu2s8h4d")
-	acc2 = sdk.MustAccAddressFromBech32("evmos1nsrs4t7dngkdltehkm3p6n8dp22sz3mct9uhc8")
+	acc1 = sdk.MustAccAddressFromBech32("oraie1pda2qlyjfn7k56s6hr5vh8vz3j3jnah4fyx4s3")
+	acc2 = sdk.MustAccAddressFromBech32("oraie16yefkqyzshnrvz4sxzufndyfphnkajs9rmhrht")
 )
 
 func (suite *GenesisTestSuite) TestClaimInitGenesis() {

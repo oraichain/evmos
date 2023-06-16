@@ -7,9 +7,9 @@ import (
 )
 
 func (suite *KeeperTestSuite) TestsClaimsRecords() {
-	addr1, err := sdk.AccAddressFromBech32("evmos1hf0468jjpe6m6vx38s97z2qqe8ldu0njdyf625")
+	addr1, err := sdk.AccAddressFromBech32("oraie16yefkqyzshnrvz4sxzufndyfphnkajs9rmhrht")
 	suite.Require().NoError(err)
-	addr2, err := sdk.AccAddressFromBech32("evmos1sv9m0g7ycejwr3s369km58h5qe7xj77hvcxrms")
+	addr2, err := sdk.AccAddressFromBech32("oraie1pda2qlyjfn7k56s6hr5vh8vz3j3jnah4fyx4s3")
 	suite.Require().NoError(err)
 
 	cr1 := types.NewClaimsRecord(sdk.NewInt(1000))
