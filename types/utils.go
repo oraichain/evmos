@@ -17,6 +17,8 @@ const (
 	MainnetChainID = "evmos_9001"
 	// TestnetChainID defines the Evmos EIP155 chain ID for testnet
 	TestnetChainID = "evmos_9000"
+	// BaseDenom defines the Evmos mainnet denomination
+	BaseDenom = "aevmos"
 )
 
 // IsMainnet returns true if the chain-id has the Evmos mainnet EIP155 chain prefix.
