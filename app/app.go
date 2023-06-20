@@ -108,6 +108,7 @@ import (
 	_ "github.com/evmos/evmos/v9/client/docs/statik"
 
 	"github.com/evmos/evmos/v9/app/ante"
+	v10 "github.com/evmos/evmos/v9/app/upgrades/v10"
 	v2 "github.com/evmos/evmos/v9/app/upgrades/v2"
 	v4 "github.com/evmos/evmos/v9/app/upgrades/v4"
 	v5 "github.com/evmos/evmos/v9/app/upgrades/v5"
@@ -1130,6 +1131,9 @@ func (app *Evmos) setupUpgradeHandlers() {
 		),
 	)
 
+	// v10 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(v10.UpgradeName, v10.CreateUpgradeHandler(app.mm, app.configurator))
+
 	// When a planned update height is reached, the old binary will panic
 	// writing on disk the height and name of the update that triggered it
 	// This will read that value, and execute the preparations for the upgrade.
@@ -1174,6 +1178,8 @@ func (app *Evmos) setupUpgradeHandlers() {
 		// no store upgrade in v9
 	case v91.UpgradeName:
 		// no store upgrade in v9
+	case v10.UpgradeName:
+		// no store upgrade in v10
 	}
 
 	if storeUpgrades != nil {
