@@ -79,10 +79,13 @@ func (k Keeper) OnRecvPacket(
 		// if also not registerd, conversion will fail
 		// so we can continue with the rest of the stack
 		// if yes, then we burn legacy & mint corresponding cosmos denom amount
-		coinDenom = k.ConvertLegacyToCurrentDenomMap(ctx, coin, recipient)
-		if coinDenom == coin.Denom {
+		newDenom := k.ConvertLegacyToCurrentDenomMap(ctx, coin, recipient)
+		println("coin denom in convert legacy: ", newDenom)
+		println("coin denom is: ", coinDenom)
+		if newDenom == coinDenom {
 			return ack
 		}
+		coinDenom = newDenom
 	} else {
 		pair, _ := k.GetTokenPair(ctx, pairID)
 		if !pair.Enabled {
@@ -194,26 +197,32 @@ func (k Keeper) ConvertCoinToERC20FromPacket(ctx sdk.Context, data transfertypes
 }
 
 func (k Keeper) ConvertLegacyToCurrentDenomMap(ctx sdk.Context, coin sdk.Coin, recipient sdk.AccAddress) string {
-
+	oldCoinDenom := coin.Denom
 	erc20ContractBytes := k.GetLegacyDenomMap(ctx, coin.Denom)
 	// no item
 	if erc20ContractBytes == nil {
-		return coin.Denom
+		return oldCoinDenom
 	}
 
 	pairID := k.GetERC20Map(ctx, common.BytesToAddress(erc20ContractBytes))
 	pair, _ := k.GetTokenPair(ctx, pairID)
 	if !pair.Enabled {
 		// no-op: continue with the rest of the stack without conversion
-		return coin.Denom
+		return oldCoinDenom
 	}
 	// we burn the old coin since they are no longer in use. We then mint the current new pair cosmos denom to automatically convert to the new coin
-	k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(coin))
+	err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(coin))
+	if err != nil {
+		return oldCoinDenom
+	}
 	// re-assign coin to the correct cosmos denom.
 	coin.Denom = pair.Denom
 	coins := sdk.NewCoins(coin)
 	// TODO: should we assume that both coins have the same unit? How to process if they are in different units?
-	k.bankKeeper.MintCoins(ctx, types.ModuleName, coins)
+	err = k.bankKeeper.MintCoins(ctx, types.ModuleName, coins)
+	if err != nil {
+		return oldCoinDenom
+	}
 	k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, recipient, coins)
-	return coin.Denom
+	return pair.Denom
 }

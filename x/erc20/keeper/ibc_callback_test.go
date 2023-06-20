@@ -6,6 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/evmos/evmos/v9/contracts"
 	utils "github.com/evmos/evmos/v9/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
@@ -15,7 +16,6 @@ import (
 	ibcgotesting "github.com/cosmos/ibc-go/v3/testing"
 	ibcmock "github.com/cosmos/ibc-go/v3/testing/mock"
 	"github.com/evmos/ethermint/crypto/ethsecp256k1"
-	"github.com/evmos/evmos/v9/contracts"
 	"github.com/evmos/evmos/v9/testutil"
 	"github.com/evmos/evmos/v9/x/erc20/keeper"
 	"github.com/evmos/evmos/v9/x/erc20/types"
@@ -220,6 +220,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 
 	// Setup Cosmos <=> Evmos IBC relayer
 	sourceChannel := "channel-292"
+	erc20Address := "0x80b5a32E4F032B2a058b4F29EC95EEfEEB87aDcd"
 	evmosChannel := claimstypes.DefaultAuthorizedChannels[1]
 	path := fmt.Sprintf("%s/%s", transfertypes.PortID, evmosChannel)
 
@@ -230,6 +231,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 	expAck := ibcmock.MockAcknowledgement
 
 	registeredDenom := cosmosTokenBase
+	legacyIbcDenom := "ibc/5B9837C25C0FEB18E29CB4E1A459FCD5C4122F9C042108FCA90D6F830532A60C"
 	coins := sdk.NewCoins(
 		sdk.NewCoin(utils.BaseDenom, sdk.NewInt(1000)),
 		sdk.NewCoin(registeredDenom, sdk.NewInt(1000)), // some ERC20 token
@@ -482,6 +484,30 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				sdk.NewCoin(ibcBase, sdk.NewInt(1000)),
 				sdk.NewCoin(utils.BaseDenom, sdk.NewInt(1000)),
 				sdk.NewCoin(registeredDenom, sdk.NewInt(0)),
+			),
+		},
+		{
+			name: "ibc conversion - legacy token denom map exists",
+			malleate: func() {
+				suite.app.Erc20Keeper.SetLegacyDenomMap(suite.ctx, legacyIbcDenom, common.HexToAddress(erc20Address).Bytes())
+				suite.app.BankKeeper.MintCoins(suite.ctx, erc20types.ModuleName, sdk.NewCoins(sdk.NewCoin(legacyIbcDenom, sdk.NewInt(1000))))
+				claimsParams := suite.app.ClaimsKeeper.GetParams(suite.ctx)
+				claimsParams.EVMChannels = []string{evmosChannel}
+				suite.app.ClaimsKeeper.SetParams(suite.ctx, claimsParams) //nolint:errcheck
+
+				transfer := transfertypes.NewFungibleTokenPacketData("legacy", "1000", secpAddrCosmos, secpAddrEvmos)
+				bz := transfertypes.ModuleCdc.MustMarshalJSON(&transfer)
+				packet = channeltypes.NewPacket(bz, 100, transfertypes.PortID, sourceChannel, transfertypes.PortID, evmosChannel, timeoutHeight, 0)
+			},
+			// Fund receiver account with EVMOS, ERC20 coins and IBC vouchers
+			// We do this since we are interested in the conversion portion w/ OnRecvPacket
+			receiver:      secpAddr,
+			ackSuccess:    true,
+			checkBalances: true,
+			expErc20s:     big.NewInt(2000),
+			expCoins: sdk.NewCoins(
+				sdk.NewCoin(utils.BaseDenom, sdk.NewInt(1000)),
+				sdk.NewCoin(ibcBase, sdk.NewInt(1000)),
 			),
 		},
 	}

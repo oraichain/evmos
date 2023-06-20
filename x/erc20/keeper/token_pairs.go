@@ -116,7 +116,7 @@ func (k Keeper) deleteDenomMap(ctx sdk.Context, denom string) {
 	store.Delete([]byte(denom))
 }
 
-// SetLegacyDenomMap sets the legacy token pair id
+// SetLegacyDenomMap sets the legacy token erc20 address mapped with the given denom
 func (k Keeper) SetLegacyDenomMap(ctx sdk.Context, denom string, contract []byte) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixLegacyTokenDenomMap)
 	store.Set([]byte(denom), contract)
