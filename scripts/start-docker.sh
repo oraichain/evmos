@@ -1,7 +1,7 @@
 #!/bin/bash
 
 KEY="mykey"
-CHAINID="evmos_9000-1"
+CHAINID="evmos_9000-10"
 MONIKER="mymoniker"
 DATA_DIR=$HOME/.evmosd
 rm -rf $DATA_DIR

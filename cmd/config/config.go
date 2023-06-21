@@ -54,4 +54,12 @@ func RegisterDenoms() {
 	if err := sdk.RegisterDenom(BaseDenom, sdk.NewDecWithPrec(1, ethermint.BaseDenomUnit)); err != nil {
 		panic(err)
 	}
+
+	if err := sdk.RegisterDenom("evmos", sdk.OneDec()); err != nil {
+		panic(err)
+	}
+
+	if err := sdk.RegisterDenom("aevmos", sdk.NewDecWithPrec(1, ethermint.BaseDenomUnit)); err != nil {
+		panic(err)
+	}
 }
