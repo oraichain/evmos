@@ -1,0 +1,19 @@
+{
+  "description": "KWT ERC20",
+  "denom_units": [
+    {
+      "denom": "oraie",
+      "exponent": 0,
+      "aliases": []
+    },
+    {
+      "denom": "KWT",
+      "exponent": 18,
+      "aliases": []
+    }
+  ],
+  "base": "oraie",
+  "display": "KWT",
+  "name": "KWT channel-0",
+  "symbol": "ibcKWT-0"
+}

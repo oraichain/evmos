@@ -184,7 +184,7 @@ func (*UpdateRegisterCoinProposal) ProposalRoute() string { return RouterKey }
 
 // ProposalType returns proposal type for this proposal
 func (*UpdateRegisterCoinProposal) ProposalType() string {
-	return ProposalTypeRegisterERC20
+	return ProposalTypeUpdateRegisterCoin
 }
 
 // ValidateBasic performs a stateless check of the proposal fields
