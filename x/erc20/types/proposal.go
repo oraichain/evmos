@@ -169,6 +169,16 @@ func (ttcp *ToggleTokenConversionProposal) ValidateBasic() error {
 	return govtypes.ValidateAbstract(ttcp)
 }
 
+// NewRegisterCoinProposal returns new instance of RegisterCoinProposal
+func NewUpdateRegisterCoinProposal(title, description, erc20Address string, coinMetadata banktypes.Metadata) govtypes.Content {
+	return &UpdateRegisterCoinProposal{
+		Title:        title,
+		Description:  description,
+		Erc20Address: erc20Address,
+		Metadata:     coinMetadata,
+	}
+}
+
 // ProposalRoute returns router key for this proposal
 func (*UpdateRegisterCoinProposal) ProposalRoute() string { return RouterKey }
 

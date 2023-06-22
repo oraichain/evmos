@@ -217,7 +217,7 @@ Where metadata.json contains (example):
 
 	cmd.Flags().String(cli.FlagTitle, "", "title of proposal")
 	cmd.Flags().String(cli.FlagDescription, "", "description of proposal")
-	cmd.Flags().String(cli.FlagDeposit, "1aevmos", "deposit of proposal")
+	cmd.Flags().String(cli.FlagDeposit, "1oraie", "deposit of proposal")
 	if err := cmd.MarkFlagRequired(cli.FlagTitle); err != nil {
 		panic(err)
 	}
@@ -283,7 +283,7 @@ func NewRegisterERC20ProposalCmd() *cobra.Command {
 
 	cmd.Flags().String(cli.FlagTitle, "", "title of proposal")
 	cmd.Flags().String(cli.FlagDescription, "", "description of proposal")
-	cmd.Flags().String(cli.FlagDeposit, "1aevmos", "deposit of proposal")
+	cmd.Flags().String(cli.FlagDeposit, "1oraie", "deposit of proposal")
 	if err := cmd.MarkFlagRequired(cli.FlagTitle); err != nil {
 		panic(err)
 	}
@@ -349,7 +349,102 @@ func NewToggleTokenConversionProposalCmd() *cobra.Command {
 
 	cmd.Flags().String(cli.FlagTitle, "", "title of proposal")
 	cmd.Flags().String(cli.FlagDescription, "", "description of proposal")
-	cmd.Flags().String(cli.FlagDeposit, "1aevmos", "deposit of proposal")
+	cmd.Flags().String(cli.FlagDeposit, "1oraie", "deposit of proposal")
+	if err := cmd.MarkFlagRequired(cli.FlagTitle); err != nil {
+		panic(err)
+	}
+	if err := cmd.MarkFlagRequired(cli.FlagDescription); err != nil {
+		panic(err)
+	}
+	if err := cmd.MarkFlagRequired(cli.FlagDeposit); err != nil {
+		panic(err)
+	}
+	return cmd
+}
+
+// NewUpdateRegisterCoinProposalCmd implements the command to submit a proposal updating the registered coin mapped with an ERC20 token
+func NewUpdateRegisterCoinProposalCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "update-register-coin [metadata] [erc20-address]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Submit an update register coin proposal",
+		Long: `Submit a proposal to update a Cosmos coin to the erc20 along with an initial deposit.
+Upon passing, the
+The proposal details must be supplied via a JSON file.`,
+		Example: fmt.Sprintf(`$ %s tx gov submit-proposal update-register-coin <path/to/metadata.json> --from=<key_or_address>
+
+Where metadata.json contains (example):
+
+{
+	"description": "The native staking and governance token of the Osmosis chain",
+	"denom_units": [
+		{
+				"denom": "ibc/<HASH>",
+				"exponent": 0,
+				"aliases": ["ibcuosmo"]
+		},
+		{
+				"denom": "OSMO",
+				"exponent": 6
+		}
+	],
+	"base": "ibc/<HASH>",
+	"display": "OSMO",
+	"name": "Osmo",
+	"symbol": "OSMO"
+}`, version.AppName,
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			title, err := cmd.Flags().GetString(cli.FlagTitle)
+			if err != nil {
+				return err
+			}
+
+			description, err := cmd.Flags().GetString(cli.FlagDescription)
+			if err != nil {
+				return err
+			}
+
+			depositStr, err := cmd.Flags().GetString(cli.FlagDeposit)
+			if err != nil {
+				return err
+			}
+
+			deposit, err := sdk.ParseCoinsNormalized(depositStr)
+			if err != nil {
+				return err
+			}
+
+			metadata, err := ParseMetadata(clientCtx.Codec, args[0])
+			if err != nil {
+				return err
+			}
+
+			from := clientCtx.GetFromAddress()
+
+			content := types.NewUpdateRegisterCoinProposal(title, description, args[1], metadata)
+
+			msg, err := govtypes.NewMsgSubmitProposal(content, deposit, from)
+			if err != nil {
+				return err
+			}
+
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	cmd.Flags().String(cli.FlagTitle, "", "title of proposal")
+	cmd.Flags().String(cli.FlagDescription, "", "description of proposal")
+	cmd.Flags().String(cli.FlagDeposit, "1oraie", "deposit of proposal")
 	if err := cmd.MarkFlagRequired(cli.FlagTitle); err != nil {
 		panic(err)
 	}
